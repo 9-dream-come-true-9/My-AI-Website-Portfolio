@@ -1,6 +1,6 @@
 const rateBuckets = new Map();
 const PORTFOLIO_LINK = 'https://ocnlnp1ta2t2.feishu.cn/drive/folder/Wpm9fd5g4liX9Edxp3pctObYnng';
-const FEISHU_LOGIN_NOTE = '温馨提示：点击作品集链接需要在浏览器登录飞书才能观看。';
+const FEISHU_LOGIN_NOTE = '温馨提示：作品集托管在飞书，打开链接后请先在浏览器登录飞书账号，再查看内容。';
 
 const PORTFOLIO_CONTEXT = `
 赵亚杰，AI 产品经理候选人，上海立信会计金融学院智能科学与技术本科在读。
@@ -65,7 +65,7 @@ module.exports = async function handler(req, res) {
         '只回答与赵亚杰的项目、经历、能力、岗位匹配和联系方式有关的问题。',
         '回答要简洁、准确、偏招聘视角，优先中文。',
         '不要输出思考过程、推理过程、分析草稿或 <think> 标签，只输出可以直接展示给用户的最终答案。',
-        '每次提供飞书作品集链接时，必须同时附带温馨提示：点击作品集链接需要在浏览器登录飞书才能观看。',
+        `每次提供飞书作品集链接时，必须同时附带这句提示：${FEISHU_LOGIN_NOTE}`,
         '如果用户问到页面没有的信息，说明作品集里暂未提供。',
         `作品集资料：\n${PORTFOLIO_CONTEXT}`
       ].join('\n')
