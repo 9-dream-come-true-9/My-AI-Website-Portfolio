@@ -55,6 +55,7 @@ module.exports = async function handler(req, res) {
         '你是赵亚杰个人主页里的 AI 求职助手。',
         '只回答与赵亚杰的项目、经历、能力、岗位匹配和联系方式有关的问题。',
         '回答要简洁、准确、偏招聘视角，优先中文。',
+        '不要输出思考过程、推理过程、分析草稿或 <think> 标签，只输出可以直接展示给用户的最终答案。',
         '如果用户问到页面没有的信息，说明作品集里暂未提供。',
         `作品集资料：\n${PORTFOLIO_CONTEXT}`
       ].join('\n')
@@ -63,7 +64,10 @@ module.exports = async function handler(req, res) {
       .filter((item) => item && item.text)
       .map((item) => ({
         role: item.role === 'user' ? 'user' : 'assistant',
-        content: String(item.text).slice(0, 1200)
+        content: (item.role === 'user'
+          ? String(item.text)
+          : stripModelThinking(item.text)
+        ).slice(0, 1200)
       })),
     { role: 'user', content: userMessage.slice(0, 2000) }
   ];
@@ -90,7 +94,7 @@ module.exports = async function handler(req, res) {
     }
 
     const answer = payload && payload.choices && payload.choices[0] && payload.choices[0].message
-      ? payload.choices[0].message.content
+      ? stripModelThinking(payload.choices[0].message.content)
       : '';
 
     res.status(200).json({ answer: answer || '暂时没有拿到有效回答，可以换个方式问我项目、经历或联系方式。' });
@@ -103,6 +107,27 @@ function applySecurityHeaders(res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+}
+
+function stripModelThinking(value) {
+  let text = String(value || '').replace(/\r\n/g, '\n');
+
+  text = text
+    .replace(/<think\b[^>]*>[\s\S]*?<\/think>/gi, '')
+    .replace(/<reasoning\b[^>]*>[\s\S]*?<\/reasoning>/gi, '');
+
+  const finalAnswerMatch = text.match(/(?:^|\n)\s*(?:最终答案|正式回答|答案|回答|Final Answer)\s*[:：]\s*/i);
+  if (finalAnswerMatch) {
+    text = text.slice(finalAnswerMatch.index + finalAnswerMatch[0].length);
+  }
+
+  text = text
+    .replace(/^\s*(?:思考过程|推理过程|分析过程|Thought process|Reasoning)\s*[:：][\s\S]*?(?:\n\s*\n)+/i, '')
+    .replace(/<think\b[^>]*>[\s\S]*$/gi, '')
+    .replace(/<reasoning\b[^>]*>[\s\S]*$/gi, '')
+    .replace(/<\/(?:think|reasoning)>/gi, '');
+
+  return text.trim();
 }
 
 function getClientIp(req) {

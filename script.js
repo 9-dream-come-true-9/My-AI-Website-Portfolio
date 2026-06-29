@@ -63,30 +63,8 @@
     }, 3300);
   }
 
-  function getSafeStorage(name) {
-    try {
-      return window[name] || null;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  const localStore = getSafeStorage('localStorage');
-  const stored = localStore ? localStore.getItem('theme') : null;
-  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const theme = stored || (prefersDark ? 'dark' : 'light');
-  if (theme === 'dark') document.documentElement.classList.add('dark');
-
   if ('IntersectionObserver' in window) {
     document.documentElement.classList.add('js-anim');
-  }
-
-  const toggleBtn = document.getElementById('theme-toggle');
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', function () {
-      const isDark = document.documentElement.classList.toggle('dark');
-      if (localStore) localStore.setItem('theme', isDark ? 'dark' : 'light');
-    });
   }
 
   const revealTargets = document.querySelectorAll(
@@ -209,7 +187,14 @@
   function loadHistory() {
     try {
       const parsed = JSON.parse((sessionStore && sessionStore.getItem(storageKey)) || '[]');
-      return Array.isArray(parsed) ? parsed.slice(-18) : [];
+      if (!Array.isArray(parsed)) return [];
+      return parsed.slice(-18).map(function (item) {
+        const role = item && item.role === 'user' ? 'user' : 'bot';
+        const text = role === 'bot' ? stripModelThinking(item && item.text) : String((item && item.text) || '');
+        return { role: role, text: text };
+      }).filter(function (item) {
+        return item.text;
+      });
     } catch (error) {
       return [];
     }
@@ -224,6 +209,7 @@
 
   function appendMessage(role, text, options) {
     const opts = options || {};
+    const messageText = role === 'bot' && !opts.thinking ? stripModelThinking(text) : text;
     const wrap = document.createElement('div');
     wrap.className = 'assistant-message ' + (role === 'user' ? 'is-user' : 'is-bot');
     if (opts.thinking) wrap.dataset.thinking = 'true';
@@ -232,9 +218,9 @@
     bubble.className = 'assistant-bubble';
     if (role === 'bot' && !opts.thinking) {
       bubble.classList.add('is-markdown');
-      bubble.innerHTML = renderMarkdown(text);
+      bubble.innerHTML = renderMarkdown(messageText);
     } else {
-      bubble.textContent = text;
+      bubble.textContent = messageText;
     }
 
     const meta = document.createElement('div');
@@ -247,7 +233,7 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
 
     if (!opts.skipHistory && !opts.thinking) {
-      history.push({ role: role, text: text });
+      history.push({ role: role, text: messageText });
       saveHistory();
     }
 
@@ -448,6 +434,27 @@
     return '';
   }
 
+  function stripModelThinking(value) {
+    let text = String(value || '').replace(/\r\n/g, '\n');
+
+    text = text
+      .replace(/<think\b[^>]*>[\s\S]*?<\/think>/gi, '')
+      .replace(/<reasoning\b[^>]*>[\s\S]*?<\/reasoning>/gi, '');
+
+    const finalAnswerMatch = text.match(/(?:^|\n)\s*(?:最终答案|正式回答|答案|回答|Final Answer)\s*[:：]\s*/i);
+    if (finalAnswerMatch) {
+      text = text.slice(finalAnswerMatch.index + finalAnswerMatch[0].length);
+    }
+
+    text = text
+      .replace(/^\s*(?:思考过程|推理过程|分析过程|Thought process|Reasoning)\s*[:：][\s\S]*?(?:\n\s*\n)+/i, '')
+      .replace(/<think\b[^>]*>[\s\S]*$/gi, '')
+      .replace(/<reasoning\b[^>]*>[\s\S]*$/gi, '')
+      .replace(/<\/(?:think|reasoning)>/gi, '');
+
+    return text.trim();
+  }
+
   function renderHistory() {
     messagesEl.textContent = '';
     if (!history.length) {
@@ -499,7 +506,7 @@
       if (!response.ok) throw new Error('Bad response');
       const contentType = response.headers.get('content-type') || '';
       const payload = contentType.includes('application/json') ? await response.json() : await response.text();
-      const answer = parseModelResponse(payload).trim();
+      const answer = stripModelThinking(parseModelResponse(payload)).trim();
       return answer || 'AI 服务暂时没有返回有效回答，请稍后再试。';
     } catch (error) {
       return 'AI 服务暂时不可用，请稍后再试。';
