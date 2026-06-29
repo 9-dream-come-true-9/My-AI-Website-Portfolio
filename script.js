@@ -241,7 +241,7 @@
 
     wrap.appendChild(bubble);
     if (role === 'user' && !opts.thinking) {
-      wrap.appendChild(createUserMessageActions(messageState, bubble));
+      wrap.appendChild(createUserMessageActions(wrap, messageState, bubble));
     }
     wrap.appendChild(meta);
     messagesEl.appendChild(wrap);
@@ -250,7 +250,7 @@
     return wrap;
   }
 
-  function createUserMessageActions(messageState, bubble) {
+  function createUserMessageActions(wrap, messageState, bubble) {
     const actions = document.createElement('div');
     actions.className = 'assistant-message-actions';
 
@@ -275,7 +275,7 @@
     });
 
     editBtn.addEventListener('click', function () {
-      startInlineMessageEdit(bubble, actions, messageState);
+      startInlineMessageEdit(wrap, bubble, actions, messageState);
     });
 
     actions.appendChild(copyBtn);
@@ -293,7 +293,7 @@
     return button;
   }
 
-  function startInlineMessageEdit(bubble, actions, messageState) {
+  function startInlineMessageEdit(wrap, bubble, actions, messageState) {
     if (bubble.dataset.editing === 'true') return;
 
     const originalText = messageState.text;
@@ -333,6 +333,11 @@
         return;
       }
 
+      if (displayText === originalText) {
+        cancelEdit();
+        return;
+      }
+
       messageState.text = displayText;
       if (messageState.historyItem) messageState.historyItem.text = displayText;
       saveHistory();
@@ -341,6 +346,7 @@
       delete bubble.dataset.editing;
       delete actions.dataset.editing;
       bubble.textContent = displayText;
+      regenerateFromEditedMessage(wrap, messageState, displayText);
     }
 
     function cancelEdit() {
@@ -372,6 +378,37 @@
     bubble.appendChild(controls);
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  }
+
+  async function regenerateFromEditedMessage(wrap, messageState, question) {
+    let nextMessage = wrap.nextElementSibling;
+    while (nextMessage) {
+      const messageToRemove = nextMessage;
+      nextMessage = nextMessage.nextElementSibling;
+      messageToRemove.remove();
+    }
+
+    if (messageState.historyItem) {
+      const messageIndex = history.indexOf(messageState.historyItem);
+      if (messageIndex >= 0) {
+        history = history.slice(0, messageIndex + 1);
+      }
+      saveHistory();
+    }
+
+    sendBtn.disabled = true;
+    const thinking = appendMessage('bot', '正在整理回答…', {
+      thinking: true,
+      skipHistory: true
+    });
+
+    const requestHistory = history.slice(0, -1).slice(-8);
+    const answer = await callModel(question, requestHistory);
+    thinking.remove();
+    appendMessage('bot', answer, {
+      skipHistory: isTemporaryAssistantError(answer)
+    });
+    sendBtn.disabled = false;
   }
 
   function setActionFeedback(button, label) {
@@ -673,14 +710,15 @@
     }
   }
 
-  async function callModel(question) {
+  async function callModel(question, requestHistory) {
+    const conversationHistory = Array.isArray(requestHistory) ? requestHistory : history.slice(-8);
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: question,
-          history: history.slice(-8),
+          history: conversationHistory,
           mode: 'text'
         })
       });
@@ -704,6 +742,7 @@
     const text = question.trim();
     if (!text) return;
 
+    const requestHistory = history.slice(-8);
     appendMessage('user', text);
     input.value = '';
     autoResizeInput();
@@ -714,7 +753,7 @@
       skipHistory: true
     });
 
-    const answer = await callModel(text);
+    const answer = await callModel(text, requestHistory);
     thinking.remove();
     appendMessage('bot', answer, {
       skipHistory: isTemporaryAssistantError(answer)
