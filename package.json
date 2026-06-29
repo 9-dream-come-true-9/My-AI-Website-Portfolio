@@ -1,0 +1,8 @@
+{
+  "name": "zhao-yajie-portfolio",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "start": "vercel dev"
+  }
+}
