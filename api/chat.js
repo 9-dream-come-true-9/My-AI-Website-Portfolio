@@ -1,4 +1,6 @@
 const rateBuckets = new Map();
+const PORTFOLIO_LINK = 'https://ocnlnp1ta2t2.feishu.cn/drive/folder/Wpm9fd5g4liX9Edxp3pctObYnng';
+const FEISHU_LOGIN_NOTE = '温馨提示：点击作品集链接需要在浏览器登录飞书才能观看。';
 
 const PORTFOLIO_CONTEXT = `
 赵亚杰，AI 产品经理候选人，上海立信会计金融学院智能科学与技术本科在读。
@@ -9,7 +11,7 @@ const PORTFOLIO_CONTEXT = `
 3. RAG 智能客服：基于 RAG 架构搭建智能客服问答链路，覆盖售前、售后、商品咨询等场景，客服响应准确率提升至 91%。
 4. AI 营销工具：内容生成与 KOL 推荐，分析爆文内容、达人画像和投放效果，提升内容 ROI。
 联系方式：电话/微信 17855772097，邮箱 m19323067704@163.com。
-飞书作品集链接：https://ocnlnp1ta2t2.feishu.cn/drive/folder/Wpm9fd5g4liX9Edxp3pctObYnng（温馨提示：点击作品集链接需要在浏览器登录飞书才能观看。）
+飞书作品集链接：${PORTFOLIO_LINK}（${FEISHU_LOGIN_NOTE}）
 `;
 
 module.exports = async function handler(req, res) {
@@ -33,15 +35,22 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.AI_API_KEY || process.env.DEEPSEEK_API_KEY || process.env.MINIMAX_API_KEY || '';
-  if (!apiKey) {
-    res.status(503).json({ error: 'AI service is not configured' });
-    return;
-  }
-
   const userMessage = String((req.body && req.body.message) || '').trim();
   if (!userMessage) {
     res.status(400).json({ error: 'Missing message' });
+    return;
+  }
+
+  if (isPortfolioLinkQuestion(userMessage)) {
+    res.status(200).json({
+      answer: `飞书作品集链接：${PORTFOLIO_LINK}\n\n${FEISHU_LOGIN_NOTE}`
+    });
+    return;
+  }
+
+  const apiKey = process.env.AI_API_KEY || process.env.DEEPSEEK_API_KEY || process.env.MINIMAX_API_KEY || '';
+  if (!apiKey) {
+    res.status(503).json({ error: 'AI service is not configured' });
     return;
   }
 
@@ -129,6 +138,11 @@ function stripModelThinking(value) {
     .replace(/<\/(?:think|reasoning)>/gi, '');
 
   return text.trim();
+}
+
+function isPortfolioLinkQuestion(message) {
+  const text = String(message || '').toLowerCase();
+  return /作品集|飞书|feishu/.test(text) && /链接|地址|观看|查看|打开|入口|提示|登录|登陆|看/.test(text);
 }
 
 function getClientIp(req) {
