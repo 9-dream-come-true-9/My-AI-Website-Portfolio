@@ -1700,6 +1700,65 @@ html.dark .assistant-panel {
   white-space: pre-wrap;
 }
 
+.assistant-message-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  min-height: 1.75rem;
+  padding-right: 0.125rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.assistant-message.is-user:hover .assistant-message-actions,
+.assistant-message.is-user:focus-within .assistant-message-actions {
+  opacity: 1;
+}
+
+.assistant-message-action {
+  width: 1.625rem;
+  height: 1.625rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.assistant-message-action:hover,
+.assistant-message-action:focus-visible {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border-color: rgba(144, 100, 245, 0.18);
+  outline: none;
+}
+
+.assistant-message-action:active {
+  transform: translateY(1px);
+}
+
+.assistant-message-action[data-feedback="true"] {
+  color: #0f9f6e;
+  background: rgba(15, 159, 110, 0.12);
+  border-color: rgba(15, 159, 110, 0.2);
+}
+
+.assistant-message-action svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+@media (hover: none) {
+  .assistant-message-actions {
+    opacity: 1;
+  }
+}
+
 .assistant-message.is-bot .assistant-bubble {
   color: var(--color-ink-soft);
   background: var(--color-bg-soft);
@@ -1986,5 +2045,9 @@ html.dark .assistant-bubble.is-markdown a {
 
   .assistant-message {
     max-width: 90%;
+  }
+
+  .assistant-message-actions {
+    opacity: 1;
   }
 }

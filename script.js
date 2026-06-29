@@ -230,6 +230,9 @@
     meta.textContent = role === 'user' ? '你' : 'AI求职小杰君';
 
     wrap.appendChild(bubble);
+    if (role === 'user' && !opts.thinking) {
+      wrap.appendChild(createUserMessageActions(messageText));
+    }
     wrap.appendChild(meta);
     messagesEl.appendChild(wrap);
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -240,6 +243,97 @@
     }
 
     return wrap;
+  }
+
+  function createUserMessageActions(messageText) {
+    const actions = document.createElement('div');
+    actions.className = 'assistant-message-actions';
+
+    const copyBtn = createMessageActionButton('复制', [
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">',
+      '<rect width="14" height="14" x="8" y="8" rx="2"></rect>',
+      '<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>',
+      '</svg>'
+    ].join(''));
+
+    const editBtn = createMessageActionButton('编辑', [
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">',
+      '<path d="M12 20h9"></path>',
+      '<path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>',
+      '</svg>'
+    ].join(''));
+
+    copyBtn.addEventListener('click', function () {
+      copyTextToClipboard(messageText).then(function (copied) {
+        setActionFeedback(copyBtn, copied ? '已复制' : '复制失败');
+      });
+    });
+
+    editBtn.addEventListener('click', function () {
+      input.value = messageText;
+      autoResizeInput();
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+      setActionFeedback(editBtn, '已填入');
+    });
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(editBtn);
+    return actions;
+  }
+
+  function createMessageActionButton(label, iconHtml) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'assistant-message-action';
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.innerHTML = iconHtml;
+    return button;
+  }
+
+  function setActionFeedback(button, label) {
+    const originalLabel = button.getAttribute('aria-label') || '';
+    const originalTitle = button.title || originalLabel;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.dataset.feedback = 'true';
+
+    window.setTimeout(function () {
+      button.setAttribute('aria-label', originalLabel);
+      button.title = originalTitle;
+      delete button.dataset.feedback;
+    }, 1200);
+  }
+
+  function copyTextToClipboard(text) {
+    const value = String(text || '');
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(value).then(function () {
+        return true;
+      }).catch(function () {
+        return fallbackCopyText(value);
+      });
+    }
+    return Promise.resolve(fallbackCopyText(value));
+  }
+
+  function fallbackCopyText(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+      return document.execCommand('copy');
+    } catch (error) {
+      return false;
+    } finally {
+      textarea.remove();
+    }
   }
 
   function renderMarkdown(markdown) {
