@@ -177,7 +177,9 @@
   const hiddenStorageKey = 'portfolio-text-agent-hidden-v1';
   const temporaryAssistantErrors = [
     'AI 服务暂时没有返回有效回答，请稍后再试。',
-    'AI 服务暂时不可用，请稍后再试。'
+    'AI 服务暂时没有返回有效回答，请稍后再试',
+    'AI 服务暂时不可用，请稍后再试。',
+    'AI 服务暂时不可用，请稍后再试'
   ];
   const localStore = getSafeStorage('localStorage');
   const sessionStore = getSafeStorage('sessionStorage');
@@ -193,7 +195,7 @@
         const text = role === 'bot' ? stripModelThinking(item && item.text) : String((item && item.text) || '');
         return { role: role, text: text };
       }).filter(function (item) {
-        return item.text;
+        return item.text && !(item.role === 'bot' && isTemporaryAssistantError(item.text));
       });
     } catch (error) {
       return [];
@@ -434,6 +436,10 @@
     return '';
   }
 
+  function isTemporaryAssistantError(text) {
+    return temporaryAssistantErrors.includes(String(text || '').trim());
+  }
+
   function stripModelThinking(value) {
     let text = String(value || '').replace(/\r\n/g, '\n');
 
@@ -535,7 +541,7 @@
     const answer = await callModel(text);
     thinking.remove();
     appendMessage('bot', answer, {
-      skipHistory: temporaryAssistantErrors.includes(answer)
+      skipHistory: isTemporaryAssistantError(answer)
     });
     sendBtn.disabled = false;
     input.focus();
