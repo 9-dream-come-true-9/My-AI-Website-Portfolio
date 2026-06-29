@@ -9,8 +9,7 @@ const PORTFOLIO_CONTEXT = `
 3. RAG 智能客服：基于 RAG 架构搭建智能客服问答链路，覆盖售前、售后、商品咨询等场景，客服响应准确率提升至 91%。
 4. AI 营销工具：内容生成与 KOL 推荐，分析爆文内容、达人画像和投放效果，提升内容 ROI。
 联系方式：电话/微信 17855772097，邮箱 m19323067704@163.com。
-飞书作品集链接：https://ocnlnp1ta2t2.feishu.cn/drive/folder/Wpm9fd5g4liX9Edxp3pctObYnng
-温馨提示：点击作品集链接需要在浏览器登录飞书才能观看。
+飞书作品集链接：https://ocnlnp1ta2t2.feishu.cn/drive/folder/Wpm9fd5g4liX9Edxp3pctObYnng（温馨提示：点击作品集链接需要在浏览器登录飞书才能观看。）
 `;
 
 module.exports = async function handler(req, res) {
@@ -57,6 +56,7 @@ module.exports = async function handler(req, res) {
         '只回答与赵亚杰的项目、经历、能力、岗位匹配和联系方式有关的问题。',
         '回答要简洁、准确、偏招聘视角，优先中文。',
         '不要输出思考过程、推理过程、分析草稿或 <think> 标签，只输出可以直接展示给用户的最终答案。',
+        '每次提供飞书作品集链接时，必须同时附带温馨提示：点击作品集链接需要在浏览器登录飞书才能观看。',
         '如果用户问到页面没有的信息，说明作品集里暂未提供。',
         `作品集资料：\n${PORTFOLIO_CONTEXT}`
       ].join('\n')
