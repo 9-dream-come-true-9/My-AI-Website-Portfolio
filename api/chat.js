@@ -10,6 +10,7 @@ const PORTFOLIO_CONTEXT = `
 4. AI 营销工具：内容生成与 KOL 推荐，分析爆文内容、达人画像和投放效果，提升内容 ROI。
 联系方式：电话/微信 17855772097，邮箱 m19323067704@163.com。
 飞书作品集链接：https://ocnlnp1ta2t2.feishu.cn/drive/folder/Wpm9fd5g4liX9Edxp3pctObYnng
+温馨提示：点击作品集链接需要在浏览器登录飞书才能观看。
 `;
 
 module.exports = async function handler(req, res) {
