@@ -1700,6 +1700,44 @@ html.dark .assistant-panel {
   white-space: pre-wrap;
 }
 
+.assistant-message.is-user .assistant-bubble.is-editing {
+  width: min(24rem, 100%);
+  min-width: min(16rem, 100%);
+  color: var(--color-ink);
+  background: var(--color-bg-elev);
+  border: 1px solid rgba(144, 100, 245, 0.22);
+  box-shadow: 0 12px 30px -24px rgba(17, 19, 29, 0.45);
+  white-space: normal;
+}
+
+.assistant-edit-textarea {
+  width: 100%;
+  min-height: 4.25rem;
+  max-height: 10rem;
+  resize: vertical;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  color: var(--color-ink);
+  background: var(--color-bg);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  outline: none;
+}
+
+.assistant-edit-textarea:focus {
+  border-color: rgba(144, 100, 245, 0.5);
+  box-shadow: 0 0 0 3px rgba(144, 100, 245, 0.12);
+}
+
+.assistant-edit-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
 .assistant-message-actions {
   display: inline-flex;
   align-items: center;
@@ -1714,6 +1752,10 @@ html.dark .assistant-panel {
 .assistant-message.is-user:hover .assistant-message-actions,
 .assistant-message.is-user:focus-within .assistant-message-actions {
   opacity: 1;
+}
+
+.assistant-message-actions[data-editing="true"] {
+  display: none;
 }
 
 .assistant-message-action {
@@ -1751,6 +1793,16 @@ html.dark .assistant-panel {
 .assistant-message-action svg {
   width: 0.9375rem;
   height: 0.9375rem;
+}
+
+.assistant-edit-action {
+  color: var(--color-ink-muted);
+  background: var(--color-bg-soft);
+  border-color: var(--color-border);
+}
+
+.assistant-edit-action[aria-label="保存"] {
+  color: #0f9f6e;
 }
 
 @media (hover: none) {

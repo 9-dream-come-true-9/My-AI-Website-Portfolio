@@ -212,6 +212,10 @@
   function appendMessage(role, text, options) {
     const opts = options || {};
     const messageText = role === 'bot' && !opts.thinking ? stripModelThinking(text) : text;
+    const messageState = {
+      text: String(messageText || ''),
+      historyItem: opts.historyItem || null
+    };
     const wrap = document.createElement('div');
     wrap.className = 'assistant-message ' + (role === 'user' ? 'is-user' : 'is-bot');
     if (opts.thinking) wrap.dataset.thinking = 'true';
@@ -229,23 +233,24 @@
     meta.className = 'assistant-meta';
     meta.textContent = role === 'user' ? '你' : 'AI求职小杰君';
 
+    if (!opts.skipHistory && !opts.thinking) {
+      messageState.historyItem = { role: role, text: messageState.text };
+      history.push(messageState.historyItem);
+      saveHistory();
+    }
+
     wrap.appendChild(bubble);
     if (role === 'user' && !opts.thinking) {
-      wrap.appendChild(createUserMessageActions(messageText));
+      wrap.appendChild(createUserMessageActions(messageState, bubble));
     }
     wrap.appendChild(meta);
     messagesEl.appendChild(wrap);
     messagesEl.scrollTop = messagesEl.scrollHeight;
 
-    if (!opts.skipHistory && !opts.thinking) {
-      history.push({ role: role, text: messageText });
-      saveHistory();
-    }
-
     return wrap;
   }
 
-  function createUserMessageActions(messageText) {
+  function createUserMessageActions(messageState, bubble) {
     const actions = document.createElement('div');
     actions.className = 'assistant-message-actions';
 
@@ -264,17 +269,13 @@
     ].join(''));
 
     copyBtn.addEventListener('click', function () {
-      copyTextToClipboard(messageText).then(function (copied) {
+      copyTextToClipboard(messageState.text).then(function (copied) {
         setActionFeedback(copyBtn, copied ? '已复制' : '复制失败');
       });
     });
 
     editBtn.addEventListener('click', function () {
-      input.value = messageText;
-      autoResizeInput();
-      input.focus();
-      input.setSelectionRange(input.value.length, input.value.length);
-      setActionFeedback(editBtn, '已填入');
+      startInlineMessageEdit(bubble, actions, messageState);
     });
 
     actions.appendChild(copyBtn);
@@ -290,6 +291,87 @@
     button.title = label;
     button.innerHTML = iconHtml;
     return button;
+  }
+
+  function startInlineMessageEdit(bubble, actions, messageState) {
+    if (bubble.dataset.editing === 'true') return;
+
+    const originalText = messageState.text;
+    bubble.dataset.editing = 'true';
+    bubble.classList.add('is-editing');
+    actions.dataset.editing = 'true';
+    bubble.textContent = '';
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'assistant-edit-textarea';
+    textarea.value = originalText;
+    textarea.rows = Math.min(6, Math.max(2, originalText.split('\n').length));
+    textarea.setAttribute('aria-label', '编辑这条消息');
+
+    const controls = document.createElement('div');
+    controls.className = 'assistant-edit-controls';
+
+    const saveBtn = createMessageActionButton('保存', [
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">',
+      '<path d="M20 6 9 17l-5-5"></path>',
+      '</svg>'
+    ].join(''));
+    saveBtn.classList.add('assistant-edit-action');
+
+    const cancelBtn = createMessageActionButton('取消', [
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">',
+      '<path d="M18 6 6 18"></path>',
+      '<path d="m6 6 12 12"></path>',
+      '</svg>'
+    ].join(''));
+    cancelBtn.classList.add('assistant-edit-action');
+
+    function finishEdit(nextText) {
+      const displayText = nextText.trim();
+      if (!displayText) {
+        textarea.focus();
+        return;
+      }
+
+      messageState.text = displayText;
+      if (messageState.historyItem) messageState.historyItem.text = displayText;
+      saveHistory();
+
+      bubble.classList.remove('is-editing');
+      delete bubble.dataset.editing;
+      delete actions.dataset.editing;
+      bubble.textContent = displayText;
+    }
+
+    function cancelEdit() {
+      bubble.classList.remove('is-editing');
+      delete bubble.dataset.editing;
+      delete actions.dataset.editing;
+      bubble.textContent = originalText;
+    }
+
+    saveBtn.addEventListener('click', function () {
+      finishEdit(textarea.value);
+    });
+
+    cancelBtn.addEventListener('click', cancelEdit);
+
+    textarea.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        cancelEdit();
+      } else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        finishEdit(textarea.value);
+      }
+    });
+
+    controls.appendChild(cancelBtn);
+    controls.appendChild(saveBtn);
+    bubble.appendChild(textarea);
+    bubble.appendChild(controls);
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
   }
 
   function setActionFeedback(button, label) {
@@ -566,7 +648,7 @@
       return;
     }
     history.forEach(function (item) {
-      appendMessage(item.role, item.text, { skipHistory: true });
+      appendMessage(item.role, item.text, { skipHistory: true, historyItem: item });
     });
   }
 
