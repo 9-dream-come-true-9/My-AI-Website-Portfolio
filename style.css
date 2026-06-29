@@ -1745,12 +1745,6 @@ html.dark .assistant-panel {
   gap: 0.25rem;
   min-height: 1.75rem;
   padding-right: 0.125rem;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.assistant-message.is-user:hover .assistant-message-actions,
-.assistant-message.is-user:focus-within .assistant-message-actions {
   opacity: 1;
 }
 
@@ -1803,12 +1797,6 @@ html.dark .assistant-panel {
 
 .assistant-edit-action[aria-label="保存"] {
   color: #0f9f6e;
-}
-
-@media (hover: none) {
-  .assistant-message-actions {
-    opacity: 1;
-  }
 }
 
 .assistant-message.is-bot .assistant-bubble {
@@ -2099,7 +2087,4 @@ html.dark .assistant-bubble.is-markdown a {
     max-width: 90%;
   }
 
-  .assistant-message-actions {
-    opacity: 1;
-  }
 }
