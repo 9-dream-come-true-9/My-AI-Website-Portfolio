@@ -2055,7 +2055,23 @@ html.dark .assistant-bubble.is-markdown a {
   }
 
   .assistant-callout {
-    display: none;
+    width: min(13.25rem, calc(100vw - 7rem));
+    min-height: 3rem;
+    margin-top: 0;
+    padding: 0.58rem 0.78rem;
+    display: block;
+    font-size: 0.75rem;
+    line-height: 1.32;
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .assistant-callout::after {
+    right: -0.32rem;
+    top: 1.2rem;
+    width: 0.65rem;
+    height: 0.65rem;
   }
 
   .assistant-launcher {
