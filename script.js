@@ -2,24 +2,12 @@
   'use strict';
 
   function initVideoBackgroundPlayback() {
-    const bg = document.querySelector('.site-video-bg');
     const video = document.querySelector('.site-video-bg-media');
-    if (!bg || !video) return;
+    if (!video) return;
 
-    const source = video.querySelector('source[data-src]');
-    if (!source) return;
-
-    const motionQuery = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    const effectiveType = connection && connection.effectiveType ? connection.effectiveType : '';
-    const shouldSkipVideo =
-      (motionQuery && motionQuery.matches) ||
-      (connection && connection.saveData) ||
-      /(^|-)2g$/.test(effectiveType);
-
-    if (shouldSkipVideo) return;
-
-    let hasLoaded = false;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
 
     function playVideo() {
       const playResult = video.play();
@@ -28,47 +16,12 @@
       }
     }
 
-    function markVideoReady() {
-      bg.classList.add('is-video-ready');
-    }
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && video.paused) playVideo();
+    });
 
-    function loadVideo() {
-      if (hasLoaded) return;
-      hasLoaded = true;
-
-      video.loop = true;
-      video.muted = true;
-      video.playsInline = true;
-      video.addEventListener('canplay', markVideoReady, { once: true });
-      video.addEventListener('playing', markVideoReady, { once: true });
-      source.src = source.dataset.src;
-      video.load();
-      playVideo();
-
-      document.addEventListener('visibilitychange', function () {
-        if (!document.hidden && video.paused) playVideo();
-      });
-    }
-
-    function scheduleVideoLoad() {
-      if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(loadVideo, { timeout: 1800 });
-      } else {
-        window.setTimeout(loadVideo, 700);
-      }
-    }
-
-    if (document.visibilityState === 'hidden') {
-      document.addEventListener(
-        'visibilitychange',
-        function onVisible() {
-          if (document.visibilityState === 'visible') scheduleVideoLoad();
-        },
-        { once: true }
-      );
-    } else {
-      scheduleVideoLoad();
-    }
+    if (video.readyState >= 1) playVideo();
+    else video.addEventListener('loadedmetadata', playVideo, { once: true });
   }
 
   initVideoBackgroundPlayback();

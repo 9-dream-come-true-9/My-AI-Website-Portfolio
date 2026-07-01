@@ -16,8 +16,6 @@
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
   <link rel="manifest" href="site.webmanifest" />
-  <link rel="preload" as="image" href="assets/background-turquoise-poster.webp" fetchpriority="high" />
-  <link rel="preload" as="image" href="assets/ai-job-xiaojiejun-sprite.webp" type="image/webp" fetchpriority="high" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
@@ -25,8 +23,8 @@
 </head>
 <body>
   <div class="site-video-bg" aria-hidden="true">
-    <video class="site-video-bg-media" muted loop playsinline preload="none" poster="assets/background-turquoise-poster.webp">
-      <source data-src="assets/background-turquoise-bay-fast.mp4" type="video/mp4" />
+    <video class="site-video-bg-media" autoplay muted loop playsinline preload="auto">
+      <source src="assets/background-turquoise-bay-5008-4k.mp4" type="video/mp4" />
     </video>
   </div>
   <header class="site-header">
@@ -310,10 +308,7 @@
 
       <button class="assistant-launcher" type="button" data-assistant-toggle aria-label="打开AI求职小杰君" aria-expanded="false" aria-controls="assistant-panel">
         <span class="assistant-sprite-shell" aria-hidden="true">
-          <picture class="assistant-sprite-picture">
-            <source srcset="assets/ai-job-xiaojiejun-sprite.webp" type="image/webp" />
-            <img class="assistant-sprite-image" src="assets/ai-job-xiaojiejun-sprite.png" alt="" width="9200" height="100" decoding="async" fetchpriority="high" />
-          </picture>
+          <img class="assistant-sprite-image" src="assets/ai-job-xiaojiejun-sprite.png?v=hq-restore-1" alt="" />
         </span>
         <span class="assistant-sprite-shadow" aria-hidden="true"></span>
       </button>

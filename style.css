@@ -71,7 +71,6 @@ body {
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  background: #070b22 url("assets/background-turquoise-poster.webp") center center / cover no-repeat;
   contain: paint;
 }
 
@@ -82,13 +81,8 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: center center;
-  opacity: 0;
-  transform: translateZ(0);
-  transition: opacity 0.7s ease;
-}
-
-.site-video-bg.is-video-ready .site-video-bg-media {
   opacity: 1;
+  transform: translateZ(0);
 }
 
 .site-header,
@@ -1386,10 +1380,6 @@ html.hero-motion-done .hero-copy-step {
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: inherit;
   pointer-events: none;
-}
-
-.assistant-sprite-picture {
-  display: contents;
 }
 
 .assistant-sprite-image {
