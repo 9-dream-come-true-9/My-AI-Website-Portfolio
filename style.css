@@ -71,7 +71,6 @@ body {
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
-  background: #070b22 url("assets/background-turquoise-poster-hq.jpg?v=bg-poster-hq-1") center center / cover no-repeat;
   contain: paint;
 }
 
@@ -82,13 +81,8 @@ body {
   height: 100%;
   object-fit: cover;
   object-position: center center;
-  opacity: 0;
-  transform: translateZ(0);
-  transition: opacity 0.7s ease;
-}
-
-.site-video-bg.is-video-ready .site-video-bg-media {
   opacity: 1;
+  transform: translateZ(0);
 }
 
 .site-header,
@@ -1388,18 +1382,6 @@ html.hero-motion-done .hero-copy-step {
   pointer-events: none;
 }
 
-.assistant-sprite-still {
-  position: absolute;
-  inset: 0;
-  width: var(--assistant-frame-size);
-  height: var(--assistant-frame-size);
-  object-fit: cover;
-  display: block;
-  opacity: 1;
-  transform: translateZ(0);
-  transition: opacity 0.22s ease;
-}
-
 .assistant-sprite-image {
   position: absolute;
   top: 0;
@@ -1409,19 +1391,7 @@ html.hero-motion-done .hero-copy-step {
   max-width: none;
   display: block;
   animation: xiaojunWalk 4s steps(91) infinite;
-  animation-play-state: paused;
-  opacity: 0;
-  transition: opacity 0.22s ease;
   will-change: transform;
-}
-
-.assistant-sprite-shell.is-sprite-ready .assistant-sprite-still {
-  opacity: 0;
-}
-
-.assistant-sprite-shell.is-sprite-ready .assistant-sprite-image {
-  opacity: 1;
-  animation-play-state: running;
 }
 
 .assistant-sprite-shadow {

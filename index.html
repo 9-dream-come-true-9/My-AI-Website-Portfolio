@@ -16,8 +16,6 @@
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
   <link rel="manifest" href="site.webmanifest" />
-  <link rel="preload" as="image" href="assets/background-turquoise-poster-hq.jpg?v=bg-poster-hq-1" fetchpriority="high" />
-  <link rel="preload" as="image" href="assets/ai-job-xiaojiejun-still.png?v=xiaojun-still-1" fetchpriority="high" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
@@ -25,8 +23,8 @@
 </head>
 <body>
   <div class="site-video-bg" aria-hidden="true">
-    <video class="site-video-bg-media" muted loop playsinline preload="none" poster="assets/background-turquoise-poster-hq.jpg?v=bg-poster-hq-1">
-      <source data-src="assets/background-turquoise-bay-5008-4k.mp4?v=bg-hq-video-1" type="video/mp4" />
+    <video class="site-video-bg-media" autoplay muted loop playsinline preload="auto">
+      <source src="assets/background-turquoise-bay-5008-4k.mp4" type="video/mp4" />
     </video>
   </div>
   <header class="site-header">
@@ -310,8 +308,7 @@
 
       <button class="assistant-launcher" type="button" data-assistant-toggle aria-label="打开AI求职小杰君" aria-expanded="false" aria-controls="assistant-panel">
         <span class="assistant-sprite-shell" aria-hidden="true">
-          <img class="assistant-sprite-still" src="assets/ai-job-xiaojiejun-still.png?v=xiaojun-still-1" alt="" width="400" height="400" decoding="async" fetchpriority="high" />
-          <img class="assistant-sprite-image" data-src="assets/ai-job-xiaojiejun-sprite.png?v=xiaojun-hq-sprite-1" alt="" width="36800" height="400" decoding="async" />
+          <img class="assistant-sprite-image" src="assets/ai-job-xiaojiejun-sprite.png?v=hq-restore-1" alt="" />
         </span>
         <span class="assistant-sprite-shadow" aria-hidden="true"></span>
       </button>
