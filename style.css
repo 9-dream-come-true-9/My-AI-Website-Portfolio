@@ -1326,8 +1326,6 @@ html.hero-motion-done .hero-copy-step {
   font-family: var(--font-body);
   --assistant-icon-size: 110px;
   --assistant-frame-size: 100px;
-  --assistant-sprite-width: 9200px;
-  --assistant-sprite-end: -9100px;
 }
 
 .assistant-resident {
@@ -1384,14 +1382,11 @@ html.hero-motion-done .hero-copy-step {
 
 .assistant-sprite-image {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: var(--assistant-sprite-width);
-  height: var(--assistant-frame-size);
-  max-width: none;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   display: block;
-  animation: xiaojunWalk 4s steps(91) infinite;
-  will-change: transform;
 }
 
 .assistant-sprite-shadow {
@@ -1405,11 +1400,6 @@ html.hero-motion-done .hero-copy-step {
   opacity: 0.6;
   transform: translateX(-50%);
   pointer-events: none;
-}
-
-@keyframes xiaojunWalk {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(var(--assistant-sprite-end)); }
 }
 
 .assistant-callout {
@@ -2024,7 +2014,6 @@ html.dark .assistant-bubble.is-markdown a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .assistant-sprite-image,
   .assistant-callout {
     animation: none;
   }
@@ -2039,8 +2028,6 @@ html.dark .assistant-bubble.is-markdown a {
     transform: none;
     --assistant-icon-size: 64px;
     --assistant-frame-size: 58px;
-    --assistant-sprite-width: 5336px;
-    --assistant-sprite-end: -5278px;
   }
 
   .site-assistant.is-hidden {
