@@ -1315,67 +1315,6 @@ html.hero-motion-done .hero-copy-step {
   border: 0;
 }
 
-/* The portfolio artwork is intentionally removed; let the introduction own the hero width. */
-@media (min-width: 64rem) {
-  .hero-grid {
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 58rem;
-    margin-inline: auto;
-  }
-
-  .hero-text {
-    max-width: none;
-  }
-}
-
-/* Center the intro and keep its copy from breaking into awkward fragments. */
-.hero-text {
-  text-align: center;
-}
-
-.hero-title {
-  text-wrap: pretty;
-}
-
-.hero-title-line {
-  max-width: 100%;
-  text-wrap: pretty;
-}
-
-.hero-bio {
-  margin-left: auto;
-  margin-right: auto;
-  max-width: 44rem;
-  text-align: left;
-  text-wrap: pretty;
-}
-
-.tech-stack,
-.stats-row,
-.hero-actions {
-  justify-content: center;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.hero-actions {
-  align-items: center;
-}
-
-@media (max-width: 47.99rem) {
-  .hero-title {
-    font-size: clamp(2.15rem, 10vw, 3.2rem);
-  }
-
-  .hero-actions {
-    align-items: center;
-  }
-
-  .circle-btn {
-    width: min(100%, 22rem);
-  }
-}
-
 .site-assistant {
   position: fixed;
   right: 2rem;
