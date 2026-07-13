@@ -13,6 +13,7 @@
   --color-border-strong: #d0d0d0;
   --color-accent: #9064f5;
   --color-accent-secondary: #e8a4d4;
+  --color-nav-chat: #c43d8f;
   --color-accent-soft: rgba(144, 100, 245, 0.08);
   --gradient-accent: #9064f5;
 
@@ -33,6 +34,7 @@ html.dark {
   --color-border-strong: #353740;
   --color-accent: #a987ff;
   --color-accent-secondary: #e8a4d4;
+  --color-nav-chat: #ff9bd1;
   --color-accent-soft: rgba(144, 100, 245, 0.16);
   --gradient-accent: #a987ff;
 }
@@ -256,18 +258,26 @@ html.dark .site-header {
 
 .nav-link {
   padding: 0.5rem 1rem;
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 900;
   color: rgba(17, 19, 29, 0.9);
+  background: rgba(255, 255, 255, 0.36);
   border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.44), 0 4px 16px rgba(17, 19, 29, 0.06);
+  backdrop-filter: blur(10px) saturate(1.08);
+  -webkit-backdrop-filter: blur(10px) saturate(1.08);
   text-shadow: 0 1px 14px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(255, 255, 255, 0.72);
-  transition: color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition: color 150ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 150ms cubic-bezier(0.23, 1, 0.32, 1), transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .nav-link:hover {
   color: var(--color-accent);
-  background: rgba(255, 255, 255, 0.24);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.56);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.68), 0 6px 20px rgba(17, 19, 29, 0.08);
+}
+
+.nav-link:active {
+  transform: scale(0.97);
 }
 
 .nav-link[data-nav-idx="0"]:hover,
@@ -280,7 +290,21 @@ html.dark .site-header {
 
 html.dark .nav-link {
   color: rgba(255, 255, 255, 0.88);
+  background: rgba(17, 19, 29, 0.36);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13), 0 4px 18px rgba(0, 0, 0, 0.18);
   text-shadow: 0 1px 14px rgba(0, 0, 0, 0.56), 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+html.dark .nav-link:hover {
+  background: rgba(17, 19, 29, 0.54);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 6px 20px rgba(0, 0, 0, 0.24);
+}
+
+.nav-link.nav-link-chat,
+.nav-link.nav-link-chat:hover,
+html.dark .nav-link.nav-link-chat,
+html.dark .nav-link.nav-link-chat:hover {
+  color: var(--color-nav-chat);
 }
 
 .header-actions {

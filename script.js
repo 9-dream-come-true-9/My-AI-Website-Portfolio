@@ -98,7 +98,7 @@
 
   initHeroCopySequence();
 
-  const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+  const navLinks = Array.from(document.querySelectorAll('.nav-link:not([data-assistant-open])'));
   const sections = navLinks
     .map(function (link) {
       const href = link.getAttribute('href');
@@ -172,6 +172,7 @@
   const input = root.querySelector('[data-assistant-input]');
   const sendBtn = root.querySelector('[data-assistant-send]');
   const promptBtns = Array.from(root.querySelectorAll('[data-assistant-prompt]'));
+  const openBtns = Array.from(document.querySelectorAll('[data-assistant-open]'));
   const endpoint = '/api/chat';
   const storageKey = 'portfolio-text-agent-history-v6';
   const hiddenStorageKey = 'portfolio-text-agent-hidden-v1';
@@ -771,6 +772,14 @@
       setOpen(true);
     });
   }
+
+  openBtns.forEach(function (button) {
+    button.addEventListener('click', function (event) {
+      event.preventDefault();
+      setHidden(false);
+      setOpen(true);
+    });
+  });
 
   if (hideBtn) {
     hideBtn.addEventListener('click', function (event) {
