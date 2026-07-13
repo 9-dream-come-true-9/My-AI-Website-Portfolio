@@ -1334,17 +1334,19 @@ html.hero-motion-done .hero-copy-step {
 }
 
 .hero-title {
-  text-wrap: balance;
+  text-wrap: pretty;
 }
 
 .hero-title-line {
   max-width: 100%;
-  text-wrap: balance;
+  text-wrap: pretty;
 }
 
 .hero-bio {
   margin-left: auto;
   margin-right: auto;
+  max-width: 44rem;
+  text-align: left;
   text-wrap: pretty;
 }
 
@@ -1363,10 +1365,6 @@ html.hero-motion-done .hero-copy-step {
 @media (max-width: 47.99rem) {
   .hero-title {
     font-size: clamp(2.15rem, 10vw, 3.2rem);
-  }
-
-  .hero-bio {
-    text-align: center;
   }
 
   .hero-actions {
