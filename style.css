@@ -1315,6 +1315,19 @@ html.hero-motion-done .hero-copy-step {
   border: 0;
 }
 
+/* The portfolio artwork is intentionally removed; let the introduction own the hero width. */
+@media (min-width: 64rem) {
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 58rem;
+    margin-inline: auto;
+  }
+
+  .hero-text {
+    max-width: none;
+  }
+}
+
 .site-assistant {
   position: fixed;
   right: 2rem;
