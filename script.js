@@ -174,6 +174,8 @@
   const promptBtns = Array.from(root.querySelectorAll('[data-assistant-prompt]'));
   const openBtns = Array.from(document.querySelectorAll('[data-assistant-open]'));
   const endpoint = '/api/chat';
+  const portfolioLink = 'https://ocnlnp1ta2t2.feishu.cn/drive/folder/Wpm9fd5g4liX9Edxp3pctObYnng';
+  const feishuLoginNote = '💡 温馨提示：作品集托管在飞书，打开链接后请先在浏览器登录飞书账号，再查看内容。';
   const storageKey = 'portfolio-text-agent-history-v6';
   const hiddenStorageKey = 'portfolio-text-agent-hidden-v1';
   const temporaryAssistantErrors = [
@@ -672,7 +674,30 @@
       .replace(/<reasoning\b[^>]*>[\s\S]*$/gi, '')
       .replace(/<\/(?:think|reasoning)>/gi, '');
 
-    return text.trim();
+    return normalizePortfolioOutput(text).trim();
+  }
+
+  function normalizePortfolioOutput(value) {
+    const formatted = '飞书作品集：' + portfolioLink + '\n\n' + feishuLoginNote;
+    const inlineNote = new RegExp(
+      escapeRegExp(portfolioLink) + '\\s*[（(][^\\n]*温馨提示[^\\n]*[）)]',
+      'gi'
+    );
+
+    return String(value || '')
+      .replace(
+        /\[[^\]]*Wpm9fd5g4liX9Edxp3pctObYnng[^\]]*\]\(https?:\/\/[^)\s]*Wpm9fd5g4liX9Edxp3pctObYnng[^)]*\)/gi,
+        formatted
+      )
+      .replace(inlineNote, portfolioLink + '\n\n' + feishuLoginNote)
+      .replace(
+        /(^|\n)\s*(?:💡\s*)?温馨提示：作品集托管在飞书，打开链接后请先在浏览器登录飞书账号，再查看内容。/g,
+        '$1' + feishuLoginNote
+      );
+  }
+
+  function escapeRegExp(value) {
+    return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   function renderHistory() {
@@ -711,7 +736,7 @@
     }
   }
 
-  async function callModel(question, requestHistory) {
+  async function callModel(question, requestHistory, onStreamUpdate) {
     const conversationHistory = Array.isArray(requestHistory) ? requestHistory : history.slice(-8);
     try {
       const response = await fetch(endpoint, {
@@ -726,12 +751,57 @@
 
       if (!response.ok) throw new Error('Bad response');
       const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('text/event-stream') && response.body) {
+        return await readModelStream(response, onStreamUpdate);
+      }
       const payload = contentType.includes('application/json') ? await response.json() : await response.text();
       const answer = stripModelThinking(parseModelResponse(payload)).trim();
       return answer || 'AI 服务暂时没有返回有效回答，请稍后再试。';
     } catch (error) {
       return 'AI 服务暂时不可用，请稍后再试。';
     }
+  }
+
+  async function readModelStream(response, onStreamUpdate) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let answer = '';
+
+    function consumeEvent(block) {
+      if (!block.trim()) return;
+      const lines = block.split(/\r?\n/);
+      const eventLine = lines.find(function (line) { return line.startsWith('event:'); });
+      const eventName = eventLine ? eventLine.slice(6).trim() : 'message';
+      const dataText = lines.filter(function (line) { return line.startsWith('data:'); }).map(function (line) {
+        return line.slice(5).trim();
+      }).join('\n');
+      if (!dataText) return;
+
+      const data = JSON.parse(dataText);
+      if (eventName === 'error') throw new Error(data.error || 'Stream failed');
+      if (eventName === 'delta' && typeof data.delta === 'string') {
+        answer += data.delta;
+        if (typeof onStreamUpdate === 'function') onStreamUpdate(answer);
+      }
+      if (eventName === 'done' && typeof data.answer === 'string') {
+        answer = data.answer;
+      }
+    }
+
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buffer += decoder.decode(chunk.value, { stream: true });
+      const events = buffer.split(/\r?\n\r?\n/);
+      buffer = events.pop() || '';
+      events.forEach(consumeEvent);
+    }
+
+    buffer += decoder.decode();
+    if (buffer) consumeEvent(buffer);
+    answer = stripModelThinking(answer).trim();
+    return answer || 'AI 服务暂时没有返回有效回答，请稍后再试。';
   }
 
   function autoResizeInput() {
@@ -754,11 +824,32 @@
       skipHistory: true
     });
 
-    const answer = await callModel(text, requestHistory);
-    thinking.remove();
-    appendMessage('bot', answer, {
-      skipHistory: isTemporaryAssistantError(answer)
+    const bubble = thinking.querySelector('.assistant-bubble');
+    let isStreaming = false;
+    const answer = await callModel(text, requestHistory, function (partialAnswer) {
+      const visibleAnswer = stripModelThinking(partialAnswer).trim();
+      if (!visibleAnswer) return;
+      if (!isStreaming) {
+        isStreaming = true;
+        delete thinking.dataset.thinking;
+        bubble.classList.add('is-markdown');
+      }
+      bubble.innerHTML = renderMarkdown(visibleAnswer);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
     });
+
+    if (isStreaming) {
+      bubble.innerHTML = renderMarkdown(answer);
+      if (!isTemporaryAssistantError(answer)) {
+        history.push({ role: 'bot', text: answer });
+        saveHistory();
+      }
+    } else {
+      thinking.remove();
+      appendMessage('bot', answer, {
+        skipHistory: isTemporaryAssistantError(answer)
+      });
+    }
     sendBtn.disabled = false;
     input.focus();
   }

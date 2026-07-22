@@ -1,6 +1,6 @@
 const rateBuckets = new Map();
 const PORTFOLIO_LINK = 'https://ocnlnp1ta2t2.feishu.cn/drive/folder/Wpm9fd5g4liX9Edxp3pctObYnng';
-const FEISHU_LOGIN_NOTE = '温馨提示：作品集托管在飞书，打开链接后请先在浏览器登录飞书账号，再查看内容。';
+const FEISHU_LOGIN_NOTE = '💡 温馨提示：作品集托管在飞书，打开链接后请先在浏览器登录飞书账号，再查看内容。';
 
 const PORTFOLIO_CONTEXT = `
 赵亚杰，AI 产品经理候选人，上海立信会计金融学院智能科学与技术本科在读。
@@ -11,7 +11,9 @@ const PORTFOLIO_CONTEXT = `
 3. RAG 智能客服：基于 RAG 架构搭建智能客服问答链路，覆盖售前、售后、商品咨询等场景，客服响应准确率提升至 91%。
 4. AI 营销工具：内容生成与 KOL 推荐，分析爆文内容、达人画像和投放效果，提升内容 ROI。
 联系方式：电话/微信 17855772097，邮箱 m19323067704@163.com。
-飞书作品集链接：${PORTFOLIO_LINK}（${FEISHU_LOGIN_NOTE}）
+飞书作品集链接：${PORTFOLIO_LINK}
+
+${FEISHU_LOGIN_NOTE}
 `;
 
 module.exports = async function handler(req, res) {
@@ -65,7 +67,7 @@ module.exports = async function handler(req, res) {
         '只回答与赵亚杰的项目、经历、能力、岗位匹配和联系方式有关的问题。',
         '回答要简洁、准确、偏招聘视角，优先中文。',
         '不要输出思考过程、推理过程、分析草稿或 <think> 标签，只输出可以直接展示给用户的最终答案。',
-        `每次提供飞书作品集链接时，必须同时附带这句提示：${FEISHU_LOGIN_NOTE}`,
+        `每次提供飞书作品集链接时，必须严格分成下面两段，链接行只能包含链接，不能把提示放进 Markdown 链接文字或 URL：\n飞书作品集：${PORTFOLIO_LINK}\n\n${FEISHU_LOGIN_NOTE}`,
         '如果用户问到页面没有的信息，说明作品集里暂未提供。',
         `作品集资料：\n${PORTFOLIO_CONTEXT}`
       ].join('\n')
@@ -94,25 +96,86 @@ module.exports = async function handler(req, res) {
         messages,
         temperature: 0.5,
         enable_thinking: true,
-        max_completion_tokens: 1000
+        max_completion_tokens: 1000,
+        stream: true
       })
     });
 
-    const payload = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
+      await upstream.text().catch(() => '');
       res.status(upstream.status).json({ error: 'AI request failed' });
       return;
     }
 
-    const answer = payload && payload.choices && payload.choices[0] && payload.choices[0].message
-      ? stripModelThinking(payload.choices[0].message.content)
-      : '';
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
-    res.status(200).json({ answer: answer || '暂时没有拿到有效回答，可以换个方式问我项目、经历或联系方式。' });
+    let answer = await streamModelAnswer(upstream, res);
+    if (!answer) {
+      answer = '暂时没有拿到有效回答，可以换个方式问我项目、经历或联系方式。';
+      writeStreamEvent(res, 'delta', { delta: answer });
+    }
+    writeStreamEvent(res, 'done', { answer: answer });
+    res.end();
   } catch (error) {
-    res.status(502).json({ error: 'AI service unavailable' });
+    if (res.headersSent) {
+      writeStreamEvent(res, 'error', { error: 'AI service unavailable' });
+      res.end();
+    } else {
+      res.status(502).json({ error: 'AI service unavailable' });
+    }
   }
 };
+
+async function streamModelAnswer(upstream, res) {
+  if (!upstream.body || typeof upstream.body.getReader !== 'function') return '';
+
+  const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let answer = '';
+
+  function consumeLine(line) {
+    if (!line.startsWith('data:')) return;
+    const data = line.slice(5).trim();
+    if (!data || data === '[DONE]') return;
+
+    try {
+      const payload = JSON.parse(data);
+      const delta = payload && payload.choices && payload.choices[0]
+        ? payload.choices[0].delta
+        : null;
+      const content = delta && typeof delta.content === 'string' ? delta.content : '';
+      if (!content) return;
+      answer += content;
+      writeStreamEvent(res, 'delta', { delta: content });
+    } catch (error) {
+      // Ignore malformed or non-JSON SSE metadata lines from the upstream service.
+    }
+  }
+
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    buffer += decoder.decode(chunk.value, { stream: true });
+    const lines = buffer.split(/\r?\n/);
+    buffer = lines.pop() || '';
+    lines.forEach(consumeLine);
+  }
+
+  buffer += decoder.decode();
+  if (buffer) buffer.split(/\r?\n/).forEach(consumeLine);
+  return stripModelThinking(answer);
+}
+
+function writeStreamEvent(res, event, payload) {
+  res.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);
+  if (typeof res.flush === 'function') res.flush();
+}
 
 function applySecurityHeaders(res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -138,7 +201,30 @@ function stripModelThinking(value) {
     .replace(/<reasoning\b[^>]*>[\s\S]*$/gi, '')
     .replace(/<\/(?:think|reasoning)>/gi, '');
 
-  return text.trim();
+  return normalizePortfolioOutput(text).trim();
+}
+
+function normalizePortfolioOutput(value) {
+  const formatted = `飞书作品集：${PORTFOLIO_LINK}\n\n${FEISHU_LOGIN_NOTE}`;
+  const inlineNote = new RegExp(
+    `${escapeRegExp(PORTFOLIO_LINK)}\\s*[（(][^\\n]*温馨提示[^\\n]*[）)]`,
+    'gi'
+  );
+
+  return String(value || '')
+    .replace(
+      /\[[^\]]*Wpm9fd5g4liX9Edxp3pctObYnng[^\]]*\]\(https?:\/\/[^)\s]*Wpm9fd5g4liX9Edxp3pctObYnng[^)]*\)/gi,
+      formatted
+    )
+    .replace(inlineNote, `${PORTFOLIO_LINK}\n\n${FEISHU_LOGIN_NOTE}`)
+    .replace(
+      /(^|\n)\s*(?:💡\s*)?温馨提示：作品集托管在飞书，打开链接后请先在浏览器登录飞书账号，再查看内容。/g,
+      `$1${FEISHU_LOGIN_NOTE}`
+    );
+}
+
+function escapeRegExp(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function isPortfolioLinkQuestion(message) {
