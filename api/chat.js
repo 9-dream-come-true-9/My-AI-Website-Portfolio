@@ -93,6 +93,7 @@ module.exports = async function handler(req, res) {
         model,
         messages,
         temperature: 0.5,
+        enable_thinking: true,
         max_completion_tokens: 1000
       })
     });
